@@ -21,22 +21,30 @@ const mapConfigurationStats = (
   }
 
   return {
-    size: Average,
+    bucketSize: Average / 1000,
   };
 };
 
-export const getDynamoDBTableNodes = async (
-  arns: CustomARN[],
+export const getS3Nodes = async (
+  resources: {
+    arn: CustomARN;
+    cloudformationStack?: string;
+    tags: Record<string, string>;
+  }[],
 ): Promise<
   Record<
     string,
     {
       arn: S3BucketARN;
       stats: S3BucketStats;
+      cloudformationStack: string | undefined;
+      tags: Record<string, string>;
     }
   >
 > => {
-  const tableConfigurations = await fetchAllS3BucketSizes(arns);
+  const tableConfigurations = await fetchAllS3BucketSizes(
+    resources.map(({ arn }) => arn),
+  );
 
   return Object.fromEntries(
     tableConfigurations.map(({ arn, policy }) => {
@@ -47,6 +55,9 @@ export const getDynamoDBTableNodes = async (
           stats: {
             configuration: mapConfigurationStats(policy),
           },
+          cloudformationStack: resources.find(resource => resource.arn.is(arn))
+            ?.cloudformationStack,
+          tags: resources.find(resource => resource.arn.is(arn))?.tags ?? {},
         },
       ];
     }),

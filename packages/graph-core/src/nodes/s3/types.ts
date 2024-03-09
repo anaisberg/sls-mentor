@@ -1,5 +1,5 @@
 export type S3BucketConfigurationStats = {
-  size: number;
+  bucketSize: number;
 };
 
 export type S3BucketStats = {
